@@ -12,6 +12,11 @@ use Ticket;
  */
 class FediversePlugin extends Plugin
 {
+    /**
+     * Plugin version number
+     */
+    public $version = '0.04';
+{
     public function bootstrap()
     {
         // Hook into ticket closure event
