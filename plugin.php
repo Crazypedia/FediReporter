@@ -1,8 +1,9 @@
 <?php
 if (!defined('INCLUDE_DIR')) die('No direct access.');
 
-require_once INCLUDE_DIR . 'class.plugin.php';
+require_once __DIR__ . '/config.php'; // Fix: ensure config class is loaded
 
+require_once INCLUDE_DIR . 'class.plugin.php';
 require_once __DIR__ . '/lib/PlatformDetector.php';
 require_once __DIR__ . '/lib/ReportImporter.php';
 require_once __DIR__ . '/lib/ModerationNotes.php';
@@ -11,7 +12,6 @@ class MastoReportsPlugin extends Plugin {
     var $config_class = 'MastoReportsConfig';
 
     function bootstrap() {
-        // Hook agent notes/replies so we can push moderation notes back
         Signal::connect('threadentry.created', [$this, 'onThreadEntryCreated']);
     }
 
@@ -23,10 +23,9 @@ class MastoReportsPlugin extends Plugin {
             $ticket = $thread->getObject();
             if (!($ticket instanceof Ticket)) return;
             $agent = $entry->getStaff();
-            if (!$agent) return; // staff-only
+            if (!$agent) return;
 
-            // Get stored metadata from importer
-            $meta = $ticket->getExtraData();
+            $meta = $ticket->getExtraData() ?: [];
             if (empty($meta['mr_platform']) || empty($meta['mr_instance']) || empty($meta['mr_target_account_id'])) return;
 
             $cfg = $this->getConfig();
@@ -43,7 +42,6 @@ class MastoReportsPlugin extends Plugin {
         }
     }
 
-    // Optional: create a small table to dedupe webhook deliveries
     function install() {
         try {
             $sql = "CREATE TABLE IF NOT EXISTS ost_masto_reports_imports (
@@ -65,7 +63,7 @@ class MastoReportsPlugin extends Plugin {
 
 return array(
   'id' => 'chatgpt:masto_reports',
-  'version' => '1.0.0',
+  'version' => '1.0.1',
   'name' => 'Masto/Misskey Reports Importer',
   'author' => 'ChatGPT',
   'description' => 'Imports reports from Mastodon, Misskey, Sharkey via webhook and syncs moderation notes.',

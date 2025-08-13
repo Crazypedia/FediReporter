@@ -4,18 +4,14 @@ class MastoReportImporter {
     public function __construct($config) { $this->cfg = $config; }
 
     public function importFromPayload($instance, $payload) {
-        // Auto-detect platform by payload
         $platform = MastoPlatformDetector::detectFromPayload($payload);
         if (!$platform) throw new Exception('Unable to detect platform from webhook payload.');
 
-        // Normalize report
         $norm = $this->normalize($platform, $payload);
         if (!$norm || !isset($norm['report_id'])) throw new Exception('Malformed report payload.');
 
-        // Deduplicate using table
         if ($this->exists($platform, $instance, $norm['report_id'])) return null;
 
-        // Create ticket
         $ticket = $this->createTicket($platform, $instance, $norm);
         if ($ticket) {
             $this->remember($platform, $instance, $norm['report_id'], $ticket->getId());
@@ -42,7 +38,7 @@ class MastoReportImporter {
                 'category' => $category,
                 'status_ids' => $status_ids,
             ];
-        } else { // misskey/sharkey
+        } else {
             $report_id = (string)($p['id'] ?? ($p['report']['id'] ?? ''));
             $reporter = $p['reporter'] ?? ($p['report']['reporter'] ?? []);
             $target = $p['targetUser'] ?? ($p['report']['targetUser'] ?? []);
@@ -64,13 +60,13 @@ class MastoReportImporter {
     private function acctToEmail($acct) {
         $domainPref = trim((string)$this->cfg->get('synthetic_email_domain')) ?: 'reports.local';
         if (isset($acct['acct']) && $acct['acct']) {
-            $handle = preg_replace('~[^a-z0-9_\-\.@]+~i', '', $acct['acct']);
+            $handle = preg_replace('~[^\p{L}0-9_\-\.@]+~u', '', $acct['acct']);
             if (strpos($handle, '@') === false) $handle .= '@'.$domainPref;
-            return strtolower($handle);
+            return mb_strtolower($handle, 'UTF-8');
         }
         if (isset($acct['username']) && $acct['username']) {
-            $u = preg_replace('~[^a-z0-9_\-\.]+~i', '', $acct['username']);
-            return strtolower($u).'@'.$domainPref;
+            $u = preg_replace('~[^\p{L}0-9_\-\.]+~u', '', $acct['username']);
+            return mb_strtolower($u, 'UTF-8').'@'.$domainPref;
         }
         return 'reporter@'.$domainPref;
     }
@@ -87,9 +83,7 @@ class MastoReportImporter {
         $body[] = "**Category:** ".$n['category'];
         $body[] = "**Target:** @".$target_handle;
         if (!empty($n['status_ids'])) $body[] = "**Status IDs:** ".implode(', ', $n['status_ids']);
-        if (strlen($n['comment'])) {
-            $body[] = "**Reporter comment:**\n".$n['comment'];
-        }
+        if (strlen($n['comment'])) $body[] = "**Reporter comment:**\n".$n['comment'];
         $body[] = "";
         $body[] = "Imported automatically via webhook.";
 
@@ -109,11 +103,9 @@ class MastoReportImporter {
         $ticket = Ticket::create($vars, $errors);
         if (!$ticket) throw new Exception('Ticket create failed: '.json_encode($errors));
 
-        // Save metadata for write-back
         $meta = $ticket->getExtraData() ?: [];
         $meta['mr_platform'] = $platform;
         $meta['mr_instance'] = $instance;
-        // Prefer platform-specific target IDs
         $meta['mr_target_account_id'] = $n['target']['id'] ?? ($n['target']['userId'] ?? null);
         $ticket->setExtraData($meta);
 
