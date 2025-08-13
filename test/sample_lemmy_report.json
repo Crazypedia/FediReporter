@@ -1,0 +1,17 @@
+{
+  "id": 123,
+  "reason": "Off-topic spam",
+  "published": "2025-08-12T10:00:00Z",
+  "creator": {
+    "name": "spammer",
+    "actor_id": "https://lemmy.example.org/u/spammer"
+  },
+  "post": {
+    "name": "Amazing Deal",
+    "body": "Check out my crypto project, it's 1000x!",
+    "published": "2025-08-12T09:55:00Z"
+  },
+  "comment": null,
+  "resolved": false,
+  "resolver": null
+}

@@ -1,0 +1,20 @@
+{
+  "ticket_id": 101,
+  "report_key": "example.org:abc123",
+  "ticket_fields": {
+    "fediverse_suspend_account": "0",
+    "fediverse_block_domain": "0",
+    "fediverse_limit_account": "1",
+    "fediverse_flag_account_media_sensitive": "1",
+    "fediverse_flag_server_media_sensitive": "0"
+  },
+  "report_data": {
+    "target_account": {
+      "id": "acct456",
+      "acct": "user@example.org"
+    },
+    "id": "abc123",
+    "comment": "Harassment",
+    "created_at": "2025-08-12T12:34:56Z"
+  }
+}

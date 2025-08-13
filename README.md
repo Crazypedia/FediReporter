@@ -1,82 +1,160 @@
-# Masto/Misskey Reports Importer (osTicket plugin)
+# osTicket Fediverse Moderation Plugin
 
-Imports user reports from **Mastodon**, **Misskey**, and **Sharkey** via **webhooks** into osTicket as tickets,
-and syncs **staff notes** back to the originating server as moderation notes.
+This plugin allows an osTicket installation to integrate with the moderation APIs of federated social media servers such as **Mastodon** and **Misskey/Sharkey**. It provides an interface for importing abuse reports, syncing moderation comments, and performing moderation actions from within osTicket.
 
-## Install
+---
 
-1. Copy the `masto_reports_plugin` folder to your osTicket `include/plugins/` directory.
-2. In osTicket Admin → **Manage → Plugins**, click **Add New Plugin** and enable **Masto/Misskey Reports Importer**.
-3. Open plugin **Settings** and set:
-   - **Webhook Secret (shared)** – this must match what your server sends.
-   - (Optional) Help Topic / Department / Priority
-   - **Synthetic Email Domain** – used for reporter emails when absent.
-   - **Mastodon Admin Access Token** – used to post moderation notes back to Mastodon.
-   - **Misskey/Sharkey Admin Token** – used to post moderation notes back to Misskey/Sharkey.
+## 🔧 Features
 
-## Webhook endpoint
+- ✅ Import abuse reports from Mastodon/Sharkey via webhook or polling
+- ✅ Create osTicket tickets from abuse reports
+- ✅ Sync moderation comments (push/pull)
+- ✅ Perform remote actions (suspend/block/limit/etc.)
+- ✅ Agent-controlled moderation options via UI
+- ✅ Audit logging of all moderation actions
+- ✅ Extensible modular API client for multiple platforms
 
-Use this URL (adjust to your path):
+---
+
+## 📁 Plugin Structure
 
 ```
-https://<your-domain>/include/plugins/masto_reports_plugin/webhook.php
+osticket-fediverse-moderation/
+├── migrations/                  # DB schema setup files
+│   └── 003_create_moderation_log_table.php
+├── src/                         # Main PHP logic and classes
+│   ├── MastodonAPI.php
+│   ├── MisskeyAPI.php
+│   ├── InstanceManager.php
+│   ├── ModerationSync.php
+│   ├── Logger.php
+│   ├── ReportIngestor.php
+│   └── FediversePlugin.php
+├── web/
+│   └── report_webhook.php       # Webhook endpoint for incoming reports
+├── config.php                   # Plugin configuration and field registration
+└── README.md                    # This file
 ```
 
-**Headers required:**
+---
 
-- `Authorization: Bearer <WEBHOOK_SECRET>` **or** `X-Webhook-Token: <WEBHOOK_SECRET>`
-- `X-Origin-Instance: https://your.instance.tld`
+## 🚀 Installation
 
-**Body:** JSON payload of the report. The plugin auto-detects platform by shape.
+1. Place the `osticket-fediverse-moderation/` folder in your osTicket plugin directory.
+2. Run the plugin migrations via the admin panel or CLI.
+3. Activate the plugin under **Admin → Plugins**.
+4. Ensure permissions are set to allow ticket creation and note posting.
+5. Configure the webhook endpoint on your federated server or polling script.
 
-### Supported payload shapes (examples)
+---
 
-**Mastodon-like:**
-```json
-{
-  "id": "12345",
-  "created_at": "2025-08-10T12:34:56Z",
-  "category": "spam",
-  "comment": "Abusive behavior",
-  "account": { "id": "900", "acct": "reporter@example.org", "username": "reporter" },
-  "target_account": { "id": "901", "acct": "abuser@example.org", "username": "abuser" },
-  "status_ids": ["111","112"]
-}
+## 🌐 Webhook Setup Guide
+
+### Your Webhook URL:
+
+```
+https://<your-osticket-domain>/include/plugins/osticket-fediverse-moderation/web/report_webhook.php
 ```
 
-**Misskey/Sharkey-like:**
-```json
-{
-  "id": "abc123",
-  "createdAt": "2025-08-10T12:34:56Z",
-  "comment": "Harassment",
-  "reporter": { "id": "u1", "username": "reporter" },
-  "targetUser": { "id": "u2", "username": "abuser" }
-}
+---
+
+### 🦣 Mastodon Admins
+
+Mastodon does **not** natively support report webhooks. Use one of these options:
+
+**Option 1:** Pull via Mastodon Admin API
+```bash
+curl -H "Authorization: Bearer <admin_token>" https://<your-instance>/api/v1/admin/reports
+```
+Then forward these to the webhook using a script.
+
+**Option 2:** Build a relay that polls and pushes reports to the plugin webhook.
+
+---
+
+### 🦈 Sharkey / Misskey Admins
+
+Sharkey supports `abuse.report` activities that can be federated or relayed.
+
+1. Configure outbound hooks to POST to the plugin's webhook URL.
+2. Include header: `X-Fediverse-Domain: <your-server>`
+
+If using Misskey directly, consider modifying or extending the federation logic to POST abuse reports to the webhook.
+
+---
+
+## 🛠️ Agent Moderation UI
+
+When viewing a fediverse report ticket, agents will see moderation options like:
+
+- [ ] Suspend account
+- [ ] Block domain
+- [ ] Limit account visibility
+- [ ] Mark account/server media as sensitive
+
+These options are attached via a dynamic form and respected on ticket closure.
+
+---
+
+## 📝 Audit Logging
+
+All moderation actions (success/failure) are logged to:
+
+```
+plugin_fediverse_moderation_log
 ```
 
-## How it works
+Log includes:
+- Ticket ID
+- Remote domain
+- Report ID
+- Action name
+- Status and message
+- Timestamp
 
-- On webhook call, the plugin:
-  1. Verifies secret
-  2. Auto-detects platform (Mastodon or Misskey/Sharkey) by payload keys
-  3. Normalizes and creates a ticket
-  4. Stores metadata on the ticket (platform, instance, target account id)
-  5. Deduplicates by `(platform, instance, report_id)` in table `ost_masto_reports_imports`
+---
 
-- When a staff **note/reply** is added to that ticket, the plugin:
-  - Posts a **moderation note** to the origin server with text: `[Agent Name]: {comment}`
-  - Truncates to safe length (480 chars Mastodon, 950 Misskey/Sharkey)
+## 🧪 Testing
 
-## Security
-- Webhook secret must match the configured value.
-- You can rotate the secret anytime in plugin settings.
-- Consider limiting access to the endpoint at the network level if feasible.
+You can test the ingestion by sending a mock report:
 
-## Uninstall
-- Disable the plugin in Admin → Manage → Plugins.
-- Remove the `include/plugins/masto_reports_plugin` directory.
-- Optional: drop the table `ost_masto_reports_imports`.
+```bash
+curl -X POST https://<your-osticket>/include/plugins/osticket-fediverse-moderation/web/report_webhook.php \
+  -H "Content-Type: application/json" \
+  -H "X-Fediverse-Domain: example.org" \
+  -d @sample_report.json
+```
 
-## License
-MIT
+---
+
+## 🧯 Troubleshooting
+
+- **Webhook not working?**
+  - Check web server logs
+  - Ensure POST requests are reaching the endpoint
+  - Validate JSON structure of incoming report
+
+- **Ticket not created?**
+  - May be duplicate report (report_key is unique)
+  - Check plugin logs for error messages
+
+- **Moderation actions not applying?**
+  - Ensure correct platform (Mastodon vs Misskey)
+  - Ensure tokens and API access are valid
+  - Verify ticket fields are set before closure
+
+---
+
+## 🔮 Future Plans
+
+- Admin panel for instance management
+- UI for audit log inspection
+- Multi-platform support expansion
+- Federation health scoring
+
+---
+
+## 🤝 Contributing
+
+This plugin is modular and documented in-code to assist with community contributions. PRs welcome!
+
