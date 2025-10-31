@@ -1,6 +1,6 @@
 # osTicket Fediverse Moderation Plugin
 
-This plugin adds integration between your osTicket installation and federated social platforms like **Mastodon**, **Misskey/Sharkey**, and **Lemmy**.
+This plugin adds integration between your osTicket installation and federated social platforms like **Mastodon** and **Misskey/Sharkey**. _(Lemmy support is under development and coming soon!)_
 
 ---
 
