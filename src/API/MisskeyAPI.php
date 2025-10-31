@@ -163,7 +163,7 @@ class MisskeyAPI implements FediverseAPIInterface
         }
 
         return json_decode($result, true);
-    
+    }
 
     /**
      * Stub: Misskey does not support account suspension via standard API.
