@@ -66,7 +66,13 @@ class InstanceManager
             case 'misskey':
                 return new \FediversePlugin\API\MisskeyAPI($domain, $accessToken);
             case 'lemmy':
-                return new \FediversePlugin\API\LemmyAPI($domain, $accessToken);
+                // TODO: Lemmy support is incomplete and disabled temporarily
+                // LemmyAPI exists but needs refactoring to implement FediverseAPIInterface
+                // Required changes:
+                // - Implement FediverseAPIInterface instead of APIClientInterface
+                // - Add missing methods: fetchReport, fetchReports, validateConnection, getDomain, fetchAccount, fetchPosts
+                // - Fix method signatures to return correct types (e.g., closeReport should return bool)
+                throw new APIException("Lemmy platform support is currently under development. Coming soon!");
             default:
                 throw new APIException("Unsupported platform: {$platform}");
         }

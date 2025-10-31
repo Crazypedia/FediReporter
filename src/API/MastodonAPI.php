@@ -241,7 +241,7 @@ class MastodonAPI implements FediverseAPIInterface
         }
 
         return json_decode($result, true);
-    
+    }
 
     /**
      * Suspend a Mastodon account using the admin API.

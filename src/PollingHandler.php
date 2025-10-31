@@ -32,8 +32,7 @@ class PollingHandler
                 $reports = $client->fetchReports(['resolved' => 'false']);
 
                 foreach ($reports as $report) {
-                    \FediversePlugin\TicketMapper::importReport($report, \$client);
-                    // TicketMapper::importReport($report, $client);
+                    TicketMapper::importReport($report, $client);
                 }
             } catch (APIException $e) {
                 // Optionally log or notify about failed instance sync
