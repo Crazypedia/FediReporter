@@ -12,11 +12,6 @@ class FediversePlugin extends Plugin
      */
     public $version = '0.08';
 
-    public function __construct()
-    {
-        parent::__construct();
-    }
-
     public function bootstrap()
     {
         // Hook into ticket closure event

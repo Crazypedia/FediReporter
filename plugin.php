@@ -1,13 +1,23 @@
 <?php
 
 /**
- * PSR-4 Autoloader for FediversePlugin namespace
+ * PSR-4 Autoloader for FediversePlugin namespace and main plugin class
  *
  * Automatically loads classes from the src/ directory based on namespace.
  * Example: FediversePlugin\API\MastodonAPI -> src/API/MastodonAPI.php
+ * Also handles the main FediversePlugin class in the root directory.
  */
 spl_autoload_register(function ($class) {
-    // Only handle classes in the FediversePlugin namespace
+    // Handle the main plugin class (no namespace)
+    if ($class === 'FediversePlugin') {
+        $file = __DIR__ . '/FediversePlugin.php';
+        if (file_exists($file)) {
+            require_once $file;
+        }
+        return;
+    }
+
+    // Handle classes in the FediversePlugin namespace
     $prefix = 'FediversePlugin\\';
     $base_dir = __DIR__ . '/src/';
 
@@ -29,8 +39,6 @@ spl_autoload_register(function ($class) {
         require_once $file;
     }
 });
-
-require_once __DIR__ . '/FediversePlugin.php';
 
 return [
     'id'          => 'fediverse:moderation',
