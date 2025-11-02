@@ -8,7 +8,7 @@ class FediversePlugin extends Plugin
     /**
      * Plugin version number
      */
-    public $version = '0.09';
+    public $version = '0.10';
 
     public function bootstrap()
     {

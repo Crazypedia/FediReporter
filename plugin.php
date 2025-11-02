@@ -30,12 +30,9 @@ spl_autoload_register(function ($class) {
     }
 });
 
-// Load the main plugin class
-require_once __DIR__ . '/FediversePlugin.php';
-
 return [
     'id'          => 'fediverse:moderation',
-    'version'     => '0.09',
+    'version'     => '0.10',
     'name'        => 'Fediverse Moderation Plugin',
     'author'      => 'Crazypedia and ChatGPT',
     'description' => 'Federated abuse report integration for Mastodon and Misskey. (Lemmy support coming soon)',
