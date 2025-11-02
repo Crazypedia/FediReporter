@@ -69,9 +69,10 @@ class FediversePlugin extends Plugin
      * Install plugin database tables.
      * Called when the plugin is activated in osTicket.
      *
+     * @param array &$errors Array to collect error messages
      * @return bool
      */
-    public function install()
+    public function install(&$errors)
     {
         $db = \Db::connection();
 
@@ -92,6 +93,7 @@ class FediversePlugin extends Plugin
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
         if (!$db->query($sql)) {
+            $errors[] = 'Failed to create plugin_fediverse_reports table';
             return false;
         }
 
@@ -114,6 +116,7 @@ class FediversePlugin extends Plugin
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
         if (!$db->query($sql)) {
+            $errors[] = 'Failed to create plugin_fediverse_instances table';
             return false;
         }
 
@@ -135,6 +138,7 @@ class FediversePlugin extends Plugin
         ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;";
 
         if (!$db->query($sql)) {
+            $errors[] = 'Failed to create plugin_fediverse_moderation_log table';
             return false;
         }
 
@@ -145,9 +149,10 @@ class FediversePlugin extends Plugin
      * Uninstall plugin database tables.
      * Called when the plugin is removed from osTicket.
      *
+     * @param array &$errors Array to collect error messages
      * @return bool
      */
-    public function uninstall()
+    public function uninstall(&$errors)
     {
         $db = \Db::connection();
 
@@ -160,6 +165,7 @@ class FediversePlugin extends Plugin
         foreach ($tables as $table) {
             $sql = "DROP TABLE IF EXISTS `{$table}`";
             if (!$db->query($sql)) {
+                $errors[] = "Failed to drop table: {$table}";
                 return false;
             }
         }

@@ -1,0 +1,39 @@
+# Build artifacts
+*.zip
+*.tar.gz
+*.rar
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.settings/
+
+# PHP
+vendor/
+composer.lock
+*.log
+
+# Temporary files
+*.tmp
+*.bak
+.cache/
+
+# Test files
+test_autoloader.php
+
+# Environment files
+.env
+.env.local
+
+# Debug files
+debug.log
+error.log
