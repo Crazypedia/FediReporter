@@ -42,12 +42,45 @@ osticket-fediverse-moderation/
 
 ## ⚙️ Installation Instructions
 
-1. Place the plugin folder inside your osTicket `include/plugins/` directory.
-2. Run migrations from the Admin panel or via CLI to apply DB schema.
-3. Activate the plugin in Admin → Manage → Plugins.
-4. Abuse reports will be processed via:
-   - `report_webhook.php` for servers that push
-   - `PollingHandler` (via cron) for those that do not
+### Quick Install (Recommended)
+
+1. **Copy plugin files** to your osTicket installation:
+   ```bash
+   cp -r osticket-fediverse-moderation /path/to/osticket/include/plugins/
+   ```
+
+2. **Activate the plugin** in osTicket Admin Panel:
+   - Navigate to: **Admin → Manage → Plugins**
+   - Find "Fediverse Moderation Plugin"
+   - Click **Enable/Activate**
+   - Database tables will be created automatically
+
+3. **Verify installation**:
+   - Check that 3 new tables exist:
+     - `plugin_fediverse_reports`
+     - `plugin_fediverse_instances`
+     - `plugin_fediverse_moderation_log`
+
+### Manual Database Installation (Optional)
+
+If automatic installation fails, run the SQL script manually:
+```bash
+mysql -u username -p osticket_db < install.sql
+```
+
+### What Gets Installed
+
+The plugin creates 3 database tables:
+
+- **plugin_fediverse_reports** - Stores incoming abuse reports
+- **plugin_fediverse_instances** - Configured fediverse instances (domains, tokens, platform type)
+- **plugin_fediverse_moderation_log** - Audit trail of all moderation actions
+
+### Configuration
+
+After installation, abuse reports will be processed via:
+- `report_webhook.php` for servers that push reports
+- `PollingHandler` (via cron) for polling-based ingestion
 
 ---
 

@@ -66,10 +66,14 @@ EOT;
 
         if ($ticket) {
             \FediversePlugin\Logger::log("ticket_created", $server, $reportId, $ticket->getId(), "Ticket successfully created.");
-            // Store mapping in plugin DB table
-            $sql = "INSERT INTO plugin_fediverse_reports (report_key, ticket_id, raw_data) VALUES (?, ?, ?)";
+            // Store mapping in plugin DB table with full schema
+            $sql = "INSERT INTO plugin_fediverse_reports
+                    (report_key, domain, report_id, ticket_id, raw_data, created)
+                    VALUES (?, ?, ?, ?, ?, NOW())";
             Db::connection()->query($sql, [
                 $reportKey,
+                $server,
+                $reportId,
                 $ticket->getId(),
                 json_encode($report)
             ]);

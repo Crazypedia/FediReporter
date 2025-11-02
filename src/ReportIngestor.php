@@ -64,13 +64,139 @@ class ReportIngestor
 
             self::storeReport($reportKey, $domain, $reportId, $payload);
 
-            // 5. Placeholder for ticket creation
-            return self::createTicketFromReport($reportKey, $payload);
-
-            return null;
+            // 5. Create ticket from report
+            return self::createTicketFromReport($reportKey, $domain, $payload);
 
         } catch (Exception $e) {
             error_log("Report ingestion error: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * Create an osTicket ticket from a fediverse abuse report.
+     *
+     * @param string $reportKey Unique report identifier (domain:reportId)
+     * @param string $domain The fediverse instance domain
+     * @param array $payload The normalized report data
+     * @return Ticket|null
+     */
+    private static function createTicketFromReport(string $reportKey, string $domain, array $payload): ?Ticket
+    {
+        try {
+            $reportId = $payload['id'];
+
+            // Extract report details
+            $reason = $payload['comment'] ?? 'No reason provided';
+            $reportedUser = $payload['target_account']['acct'] ?? 'Unknown user';
+            $reportedUserUrl = $payload['target_account']['url'] ?? '';
+            $reportedUserDisplay = $payload['target_account']['display_name'] ?? $reportedUser;
+            $createdAt = $payload['created_at'] ?? date('c');
+            $category = $payload['category'] ?? 'violation';
+
+            // Attempt to identify reporter (may not always be available)
+            $reporter = $payload['account']['acct'] ?? $payload['reporter_id'] ?? 'System';
+
+            // Build ticket subject
+            $subject = "Fediverse Abuse Report: {$reportedUser}";
+
+            // Build ticket body with report details
+            $body = "=== FEDIVERSE ABUSE REPORT ===\n\n";
+            $body .= "Report ID: {$reportId}\n";
+            $body .= "Source Instance: {$domain}\n";
+            $body .= "Reported At: {$createdAt}\n";
+            $body .= "Category: {$category}\n\n";
+
+            $body .= "--- Reported Account ---\n";
+            $body .= "Username: {$reportedUser}\n";
+            $body .= "Display Name: {$reportedUserDisplay}\n";
+            if ($reportedUserUrl) {
+                $body .= "Profile URL: {$reportedUserUrl}\n";
+            }
+            $body .= "\n";
+
+            $body .= "--- Report Reason ---\n";
+            $body .= "{$reason}\n\n";
+
+            // Include reported posts/statuses if available
+            if (isset($payload['statuses']) && is_array($payload['statuses']) && count($payload['statuses']) > 0) {
+                $body .= "--- Reported Posts (" . count($payload['statuses']) . ") ---\n\n";
+
+                foreach ($payload['statuses'] as $index => $status) {
+                    $postNum = $index + 1;
+                    $postId = $status['id'] ?? "unknown";
+                    $postDate = $status['created_at'] ?? '';
+                    $postContent = $status['content'] ?? '';
+
+                    // Strip HTML tags for cleaner ticket display
+                    $postContent = strip_tags($postContent);
+                    $postContent = html_entity_decode($postContent, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+                    $postContent = trim($postContent);
+
+                    $body .= "Post #{$postNum} (ID: {$postId})\n";
+                    if ($postDate) {
+                        $body .= "Posted: {$postDate}\n";
+                    }
+                    $body .= "Content:\n{$postContent}\n\n";
+                }
+            }
+
+            $body .= "--- Next Steps ---\n";
+            $body .= "1. Review the reported content and account\n";
+            $body .= "2. Determine appropriate moderation action\n";
+            $body .= "3. Close ticket to apply selected actions to remote server\n";
+
+            // Create or lookup user (use generic reporter account for fediverse reports)
+            $userEmail = "fediverse-reports@{$domain}";
+            $userName = "Fediverse Reporter ({$domain})";
+
+            $user = \User::lookupByEmail($userEmail);
+            if (!$user) {
+                $user = \User::create([
+                    'name' => $userName,
+                    'email' => $userEmail
+                ]);
+            }
+
+            if (!$user) {
+                error_log("Failed to create/lookup user for report {$reportKey}");
+                return null;
+            }
+
+            // Create the ticket
+            $ticket = \Ticket::create([
+                'user' => $user,
+                'subject' => $subject,
+                'message' => $body,
+                'source' => 'API',
+                'ip' => $domain, // Store instance domain as IP for tracking
+            ]);
+
+            if (!$ticket) {
+                error_log("Failed to create ticket for report {$reportKey}");
+                return null;
+            }
+
+            // Update the report record with the ticket_id
+            $sql = "UPDATE plugin_fediverse_reports
+                    SET ticket_id = ?
+                    WHERE report_key = ?";
+            \Db::connection()->query($sql, [$ticket->getId(), $reportKey]);
+
+            // Log successful ticket creation
+            Logger::log(
+                $ticket->getId(),
+                $domain,
+                $reportId,
+                'ticket_created',
+                'success',
+                "Ticket #{$ticket->getId()} created from report {$reportKey}"
+            );
+
+            return $ticket;
+
+        } catch (Exception $e) {
+            error_log("Failed to create ticket from report {$reportKey}: " . $e->getMessage());
             return null;
         }
     }
