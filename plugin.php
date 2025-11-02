@@ -1,5 +1,35 @@
 <?php
 
+/**
+ * PSR-4 Autoloader for FediversePlugin namespace
+ *
+ * Automatically loads classes from the src/ directory based on namespace.
+ * Example: FediversePlugin\API\MastodonAPI -> src/API/MastodonAPI.php
+ */
+spl_autoload_register(function ($class) {
+    // Only handle classes in the FediversePlugin namespace
+    $prefix = 'FediversePlugin\\';
+    $base_dir = __DIR__ . '/src/';
+
+    // Check if the class uses the namespace prefix
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        // Not our namespace, let other autoloaders handle it
+        return;
+    }
+
+    // Get the relative class name (remove namespace prefix)
+    $relative_class = substr($class, $len);
+
+    // Convert namespace separators to directory separators and add .php
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    // If the file exists, require it
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
 require_once __DIR__ . '/FediversePlugin.php';
 
 return [
