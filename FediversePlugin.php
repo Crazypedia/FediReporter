@@ -1,11 +1,6 @@
 <?php
 
-namespace FediversePlugin;
-
-use Plugin;
-use Signal;
-use ThreadEntry;
-use Ticket;
+use FediversePlugin\ModerationSync;
 
 /**
  * FediversePlugin hooks into osTicket events to manage moderation sync.
@@ -16,11 +11,6 @@ class FediversePlugin extends Plugin
      * Plugin version number
      */
     public $version = '0.08';
-
-    public function __construct()
-    {
-        parent::__construct();
-    }
 
     public function bootstrap()
     {
