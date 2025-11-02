@@ -35,7 +35,7 @@ require_once __DIR__ . '/FediversePlugin.php';
 
 return [
     'id'          => 'fediverse:moderation',
-    'version'     => '0.08',
+    'version'     => '0.09',
     'name'        => 'Fediverse Moderation Plugin',
     'author'      => 'Crazypedia and ChatGPT',
     'description' => 'Federated abuse report integration for Mastodon and Misskey. (Lemmy support coming soon)',
