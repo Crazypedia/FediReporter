@@ -1,7 +1,5 @@
 <?php
 
-use FediversePlugin\ModerationSync;
-
 /**
  * FediversePlugin hooks into osTicket events to manage moderation sync.
  */
@@ -28,7 +26,7 @@ class FediversePlugin extends Plugin
      */
     public function onTicketClosed(Ticket $ticket)
     {
-        ModerationSync::applyModerationOnClose($ticket);
+        \FediversePlugin\ModerationSync::applyModerationOnClose($ticket);
     }
 
     /**
@@ -52,7 +50,7 @@ class FediversePlugin extends Plugin
         $agent = $entry->getPoster();
         $domain = $_SERVER['HTTP_HOST'] ?? 'unknown';
 
-        ModerationSync::pushTicketNote($ticket, $entry->getBody(), $agent, $domain);
+        \FediversePlugin\ModerationSync::pushTicketNote($ticket, $entry->getBody(), $agent, $domain);
     }
 
     /**
