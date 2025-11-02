@@ -38,6 +38,6 @@ return [
     'name'        => 'Fediverse Moderation Plugin',
     'author'      => 'Crazypedia and ChatGPT',
     'description' => 'Federated abuse report integration for Mastodon and Misskey. (Lemmy support coming soon)',
-    'plugin'      => 'FediversePlugin\\FediversePlugin',
+    'plugin'      => 'FediversePlugin',
     'url'         => 'https://github.com/Crazypedia/osticket-fediverse-moderation'
 ];
