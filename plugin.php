@@ -32,7 +32,7 @@ spl_autoload_register(function ($class) {
 
 return [
     'id'          => 'fediverse:moderation',
-    'version'     => '0.10',
+    'version'     => '0.11',
     'name'        => 'Fediverse Moderation Plugin',
     'author'      => 'Crazypedia and ChatGPT',
     'description' => 'Federated abuse report integration for Mastodon and Misskey. (Lemmy support coming soon)',

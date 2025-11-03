@@ -1,6 +1,26 @@
 <?php
 
 /**
+ * PSR-4 Autoloader for FediversePlugin namespace
+ */
+spl_autoload_register(function ($class) {
+    $prefix = 'FediversePlugin\\';
+    $base_dir = __DIR__ . '/src/';
+
+    $len = strlen($prefix);
+    if (strncmp($prefix, $class, $len) !== 0) {
+        return;
+    }
+
+    $relative_class = substr($class, $len);
+    $file = $base_dir . str_replace('\\', '/', $relative_class) . '.php';
+
+    if (file_exists($file)) {
+        require_once $file;
+    }
+});
+
+/**
  * FediversePlugin hooks into osTicket events to manage moderation sync.
  */
 class FediversePlugin extends Plugin
@@ -8,7 +28,7 @@ class FediversePlugin extends Plugin
     /**
      * Plugin version number
      */
-    public $version = '0.10';
+    public $version = '0.11';
 
     public function bootstrap()
     {
